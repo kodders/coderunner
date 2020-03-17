@@ -1,0 +1,33 @@
+<form method="POST" action="index.html" id="code-form" onsubmit="return submitCode();">
+    <label for="language">Selected Language</label><br />
+    <select id="language" name="language">
+        <% for(var key in languages) { %>
+        <option value="<%= key %>"><%= languages[key].title %></option>
+        <% } %> </select
+    ><br />
+    <label for="code">Code to Run:</label><br />
+    <textarea name="code" id="code" rows="20" cols="80"></textarea><br />
+    <label for="output">Output:</label><br />
+    <textarea name="output" id="output" rows="20" cols="80"></textarea><br />
+    <button type="submit">Run Code</button>
+</form>
+<script>
+    var submitCode = () => {
+        fetch("/compile", {
+            method: "POST",
+            cache: "no-cache",
+            body: new URLSearchParams(new FormData(document.getElementById("code-form"))),
+            headers: {
+                Accept: "application/json"
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Success:", data);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        return false;
+    };
+</script>

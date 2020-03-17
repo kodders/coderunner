@@ -1,0 +1,17 @@
+{
+  "name": "coderunner",
+  "version": "1.0.0",
+  "description": "An user entered code runner in docker container",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Taha PAKSU <tpaksu@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "ejs": "^3.0.1",
+    "execa": "^4.0.0",
+    "express": "^4.17.1"
+  }
+}

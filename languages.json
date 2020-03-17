@@ -1,0 +1,7 @@
+{
+    "php73": {
+        "title": "PHP 7.3",
+        "placeholder": "<?php echo \"Hello World!\";?>",
+        "image" : "coderunner_php73"
+    }
+}
