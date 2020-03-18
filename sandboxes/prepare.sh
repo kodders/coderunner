@@ -8,16 +8,8 @@ then
     # echo $working
     if [ "$working" != "" ];
     then
-        echo "Checking if image exists.."
-        images=`docker image ls | grep $2`
-        # echo $images
-        if [ "${images}" != "" ];
-        then
-            echo "Image already exists."
-        else
-            echo "Image doesn't exist. Creating Image.."
-            docker build -t $2 - < ./$1/Dockerfile
-        fi
+        echo "Updating image.."
+        docker build -t $2 - < ./$1/Dockerfile
     fi
 else
     echo "Argument count should be 2"

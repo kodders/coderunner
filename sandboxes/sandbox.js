@@ -5,8 +5,13 @@ const path = require("path");
 
 module.exports = {
     send(input) {
+        var time = +new Date();
         if (this.prepare(input.language)) {
-            return this.execute(input.language, input.code)
+            console.log("Prepared in " + ((+new Date() - time) / 1000) + " seconds")
+            time = +new Date();
+            var result = this.execute(input.language, input.code)
+            console.log("Executed in " + ((+new Date() - time) / 1000) + " seconds")
+            return result
         }
         return null;
     },
