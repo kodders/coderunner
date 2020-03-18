@@ -23,17 +23,25 @@ module.exports = {
         return result;
     },
     execute(key, code) {
+        results = false;
         console.log("preparing sandbox");
         var sandboxId = this.prepareSandboxFolder(key, code);
         var sandboxPath = path.resolve(__dirname + `/../volumes/${sandboxId}`)
         var sandboxPathAbsolute = sandboxPath;
         if(process.platform == "win32") sandboxPathAbsolute = this.convertPath(sandboxPathAbsolute)
         console.log(`executing code in container, sandbox ID: ${sandboxId}`);
-
-        this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode ${languages[key].image} sh`); // timeout -t ${languages[key].timeout} sh /usercode/execute.sh`);
-        //this.command(__dirname, `docker run --rm -d -v ${sandboxPath}:/usercode ${languages[key].image} timeout -t ${languages[key].timeout} sh /usercode/execute.sh`);
+        //this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh`); // timeout -t ${languages[key].timeout} sh /usercode/execute.sh`);
+        //  this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh`);
+        this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} timeout -t ${languages[key].timeout} sh execute.sh ${languages[key].source} ${languages[key].output}`);
+        if(this.exists(sandboxPath + path.sep + languages[key].output)){
+            results = fs.readFileSync(sandboxPath + path.sep + languages[key].output).toString();
+        } else {
+            results = null;
+        }
+        // get result file
         console.log(`Deleting Sandbox ${sandboxPath}..`)
-        this.command(__dirname, `rm -rf ${sandboxPath}`)
+        this.command(__dirname, `rm -rf ${sandboxPath}`);
+        return results;
     },
     prepareSandboxFolder(key, code) {
         const crypto = require("crypto");
@@ -81,7 +89,7 @@ module.exports = {
         return oldPath
             .replace(/\\/g, "/")
             .replace(/^([A-Za-z]):/, function (a, b) {
-                return "/" + b.toLowerCase();
+                return "//" + b.toLowerCase();
             });
     }
 }

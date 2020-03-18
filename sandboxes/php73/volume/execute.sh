@@ -1,2 +1,2 @@
 #!/bin/bash
-echo "Code will be executed in here!"
+php $1 > $2
