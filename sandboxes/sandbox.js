@@ -15,6 +15,7 @@ module.exports = {
         const languagePath = `${__dirname}/${key}`;
         if (this.exists(languagePath) && this.exists(`${languagePath}/Dockerfile`)) {
             console.log("Starting Up..");
+            console.log("Working Dir: " + __dirname);
             result = this.command(__dirname, `prepare.sh ${key} ${languages[key].image}`)
         } else {
             console.log(`Dockerfile not found in '${languagePath}'`)
@@ -33,6 +34,7 @@ module.exports = {
         //this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh`); // timeout -t ${languages[key].timeout} sh /usercode/execute.sh`);
         //  this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh`);
         this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} timeout -t ${languages[key].timeout} sh execute.sh ${languages[key].source} ${languages[key].output}`);
+        this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} ./sh execute.sh ${languages[key].source} ${languages[key].output}`);
         if(this.exists(sandboxPath + path.sep + languages[key].output)){
             results = fs.readFileSync(sandboxPath + path.sep + languages[key].output).toString();
         } else {
@@ -46,7 +48,7 @@ module.exports = {
     prepareSandboxFolder(key, code) {
         const crypto = require("crypto");
         const id = crypto.randomBytes(16).toString("hex");
-        const languageVolumePath = `${__dirname}/${key}/volume/*`;
+        const languageVolumePath = `${__dirname}/${key}/volume/`;
         const sandboxVolumePath = path.normalize(`${__dirname}/../volumes/${id}`);
         if (fs.existsSync(sandboxVolumePath)) fs.rmdirSync(sandboxVolumePath, {
             recursive: true
@@ -65,9 +67,12 @@ module.exports = {
     },
     command(path, cmd) {
         try {
+            console.log(cmd, /^[^ ]\.sh/.exec(cmd))
+            if(/^[^ ]\.sh/.exec(cmd)) cmd = `./${cmd}`;
             var cpr = execa.commandSync(cmd, {
                 stdio: "inherit",
-                cwd: path
+                cwd: path,
+                timeout: 60000
             });
             if (cpr.failed) {
                 if (cpr.exitCode != 0) {
