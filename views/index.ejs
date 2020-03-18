@@ -23,7 +23,9 @@
         })
             .then(response => response.json())
             .then(data => {
-                console.log("Success:", data);
+                if(data.status == "ok"){
+                    document.getElementById("output").innerHTML = data.results;
+                }
             })
             .catch(error => {
                 console.error("Error:", error);

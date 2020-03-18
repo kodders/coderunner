@@ -31,7 +31,7 @@ module.exports = {
         var sandboxPathAbsolute = sandboxPath;
         if(process.platform == "win32") sandboxPathAbsolute = this.convertPath(sandboxPathAbsolute)
         console.log(`executing code in container, sandbox ID: ${sandboxId}`);
-        this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} timeout -t ${languages[key].timeout} sh execute.sh ${languages[key].source} ${languages[key].output}`);
+        // this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} timeout -t ${languages[key].timeout} sh execute.sh ${languages[key].source} ${languages[key].output}`);
         this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh execute.sh ${languages[key].source} ${languages[key].output}`);
         if(this.exists(sandboxPath + path.sep + languages[key].output)){
             results = fs.readFileSync(sandboxPath + path.sep + languages[key].output).toString();
