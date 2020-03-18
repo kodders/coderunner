@@ -1,32 +1,52 @@
+const languages = require("../languages.json")
 const execa = require("execa")
 const fs = require("fs");
+const path = require("path");
 
 module.exports = {
     send(input) {
-        const languages = require("../languages.json")
-        const language = input.language,
-            container = languages[language].image
-        var output = null;
-        if (this.prepare(language, container)) {
-            output = this.execute(input.code, container)
+        if (this.prepare(input.language)) {
+            return this.execute(input.language, input.code)
         }
-        return output;
+        return null;
     },
-    prepare(key, image) {
-        var result = true;
-        const dockerfilePath = __dirname + "/" + key;
-        if (this.exists(dockerfilePath) && this.exists(dockerfilePath + "/Dockerfile")) {
-            try {
-                console.log(execa('pwd'));
-                console.log("docker build -t \'" + image + "\' - < Dockerfile");
-                execa.commandSync("docker build -t " + image + " - < Dockerfile", { stdio: "inherit", cwd: dockerfilePath });
-            } catch (e) {
-                result = false;
-            }
+    prepare(key) {
+        var result = false;
+        const languagePath = `${__dirname}/${key}`;
+        if (this.exists(languagePath) && this.exists(`${languagePath}/Dockerfile`)) {
+            console.log("Starting Up..");
+            result = this.command(__dirname, `prepare.sh ${key} ${languages[key].image}`)
         } else {
+            console.log(`Dockerfile not found in '${languagePath}'`)
             result = false;
         }
         return result;
+    },
+    execute(key, code) {
+        console.log("preparing sandbox");
+        var sandboxId = this.prepareSandboxFolder(key, code);
+        var sandboxPath = path.resolve(__dirname + `/../volumes/${sandboxId}`)
+        var sandboxPathAbsolute = sandboxPath;
+        if(process.platform == "win32") sandboxPathAbsolute = this.convertPath(sandboxPathAbsolute)
+        console.log(`executing code in container, sandbox ID: ${sandboxId}`);
+
+        this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode ${languages[key].image} sh`); // timeout -t ${languages[key].timeout} sh /usercode/execute.sh`);
+        //this.command(__dirname, `docker run --rm -d -v ${sandboxPath}:/usercode ${languages[key].image} timeout -t ${languages[key].timeout} sh /usercode/execute.sh`);
+        console.log(`Deleting Sandbox ${sandboxPath}..`)
+        this.command(__dirname, `rm -rf ${sandboxPath}`)
+    },
+    prepareSandboxFolder(key, code) {
+        const crypto = require("crypto");
+        const id = crypto.randomBytes(16).toString("hex");
+        const languageVolumePath = `${__dirname}/${key}/volume/*`;
+        const sandboxVolumePath = path.normalize(`${__dirname}/../volumes/${id}`);
+        if (fs.existsSync(sandboxVolumePath)) fs.rmdirSync(sandboxVolumePath, {
+            recursive: true
+        });
+        fs.mkdirSync(sandboxVolumePath);
+        execa.commandSync(`cp -R ${languageVolumePath} ${sandboxVolumePath}`);
+        fs.writeFileSync(`${sandboxVolumePath}/${languages[key].source}`, code);
+        return id;
     },
     exists(path) {
         var result = true;
@@ -35,7 +55,33 @@ module.exports = {
         });
         return result;
     },
-    execute(code, container) {
-        console.log("executing code in container");
+    command(path, cmd) {
+        try {
+            var cpr = execa.commandSync(cmd, {
+                stdio: "inherit",
+                cwd: path
+            });
+            if (cpr.failed) {
+                if (cpr.exitCode != 0) {
+                    console.log(`Process exited with code ${cpr.exitCode}`);
+                } else if (cpr.killed) {
+                    console.log("Child process is killed");
+                } else if (cpr.timedOut) {
+                    console.log("Child process timed out.");
+                }
+            } else {
+                return true;
+            }
+        } catch (e) {
+            console.log(e)
+        }
+        return false;
     },
+    convertPath(oldPath) {
+        return oldPath
+            .replace(/\\/g, "/")
+            .replace(/^([A-Za-z]):/, function (a, b) {
+                return "/" + b.toLowerCase();
+            });
+    }
 }

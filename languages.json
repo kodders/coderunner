@@ -2,6 +2,9 @@
     "php73": {
         "title": "PHP 7.3",
         "placeholder": "<?php echo \"Hello World!\";?>",
-        "image" : "coderunner_php73"
+        "image" : "coderunner_php73",
+        "source": "input.php",
+        "output": "results.txt",
+        "timeout": 10
     }
 }
