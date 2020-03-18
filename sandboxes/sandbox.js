@@ -31,10 +31,8 @@ module.exports = {
         var sandboxPathAbsolute = sandboxPath;
         if(process.platform == "win32") sandboxPathAbsolute = this.convertPath(sandboxPathAbsolute)
         console.log(`executing code in container, sandbox ID: ${sandboxId}`);
-        //this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh`); // timeout -t ${languages[key].timeout} sh /usercode/execute.sh`);
-        //  this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh`);
         this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} timeout -t ${languages[key].timeout} sh execute.sh ${languages[key].source} ${languages[key].output}`);
-        this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} ./sh execute.sh ${languages[key].source} ${languages[key].output}`);
+        this.command(__dirname, `docker run --rm -it -v ${sandboxPathAbsolute}:/usercode -w /usercode ${languages[key].image} sh execute.sh ${languages[key].source} ${languages[key].output}`);
         if(this.exists(sandboxPath + path.sep + languages[key].output)){
             results = fs.readFileSync(sandboxPath + path.sep + languages[key].output).toString();
         } else {
@@ -67,8 +65,7 @@ module.exports = {
     },
     command(path, cmd) {
         try {
-            console.log(cmd, /^[^ ]\.sh/.exec(cmd))
-            if(/^[^ ]\.sh/.exec(cmd)) cmd = `./${cmd}`;
+            if(/^[^ ]+\.sh/.exec(cmd)) cmd = `./${cmd}`;
             var cpr = execa.commandSync(cmd, {
                 stdio: "inherit",
                 cwd: path,
